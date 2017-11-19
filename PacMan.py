@@ -4,6 +4,7 @@ from geometry import Point2D, Vector2D
 import math
 import random
 import time
+import numpy
 
 TIME_STEP = 0.5
 
@@ -33,15 +34,7 @@ class MovingBody(Agent):
         self.accel    = self.steer()
         self.world.trim(self)
 
-
-
-
-
-
-
-
-
-
+world = [ [0] * 40 + [1] * 20 ] * 45
 
 class PacMan(MovingBody):
     
@@ -57,8 +50,6 @@ class PacMan(MovingBody):
 
     def color(self):
         return "#F0C080"
-
-   
         
     def turn_left(self):
         self.velocity = Vector2D(-0.5,0)
@@ -72,13 +63,13 @@ class PacMan(MovingBody):
     def turn_down(self):
         self.velocity = Vector2D(0,-0.5)
 
-  
-
-   
-    
-
-    
-
+    def update(self):
+        MovingBody.update(self)
+        x = int(numpy.interp(self.position.x, [-30, 30], [0, 60]))
+        y = int(numpy.interp(self.position.y, [-22, 22], [0, 45]))
+        if world[0][x] == 1:
+            self.velocity = Vector2D(0.0)
+            
 class PlayPacMan(Game):
 
     DELAY_START      = 150
@@ -98,9 +89,6 @@ class PlayPacMan(Game):
 
         self.PacMan = PacMan(self)
 
-    def max_asteroids(self):
-        return min(2 + self.level,self.MAX_ASTEROIDS)
-
     def handle_keypress(self,event):
         Game.handle_keypress(self,event)
         if event.char == 'i':
@@ -116,7 +104,6 @@ class PlayPacMan(Game):
         
         
     def update(self):
-
         # Are we waiting to toss asteroids out?
         if self.before_start_ticks > 0:
             self.before_start_ticks -= 1
