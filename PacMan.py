@@ -36,16 +36,12 @@ class MovingBody(Agent):
 
 world = [ [1] * 45 ] * 60
 world[30] = [0] * 60
-world[31] = [0] * 60
-world[32] = [0] * 60
 for r in world:
-    r[30] = 0
     r[31] = 0
-    r[32] = 0
 
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
-        position0 = Point2D(x, y)
+        position0 = Point2D(x + .2, y + .2)
         MovingBody.__init__(self, position0, Vector2D(0), world)
 
     def color(self):
@@ -77,14 +73,14 @@ class PacMan(MovingBody):
         hp = h.perp()
         print(hp)
         pacShape = []
-        pacShape.append(self.position + Vector2D(-1, -2))
-        pacShape.append(self.position + Vector2D(1, -2))
-        pacShape.append(self.position + Vector2D(2, -1))
-        pacShape.append(self.position + Vector2D(2, 1))
-        pacShape.append(self.position + Vector2D(1, 2))
-        pacShape.append(self.position + Vector2D(-1, 2))
-        pacShape.append(self.position + Vector2D(-2, 1))
-        pacShape.append(self.position + Vector2D(-2, -1))
+        pacShape.append(self.position + Vector2D(-.5, -1))
+        pacShape.append(self.position + Vector2D(.5, -1))
+        pacShape.append(self.position + Vector2D(1, -.5))
+        pacShape.append(self.position + Vector2D(1, .5))
+        pacShape.append(self.position + Vector2D(.5, 1))
+        pacShape.append(self.position + Vector2D(-.5, 1))
+        pacShape.append(self.position + Vector2D(-1, .5))
+        pacShape.append(self.position + Vector2D(-1, -.5))
         if self.direction == 'right':
             pacShape.insert(3, self.position + Vector2D(0,0))
         elif self.direction == 'up':
@@ -97,36 +93,49 @@ class PacMan(MovingBody):
         
     def turn_left(self):
         self.direction = 'left'
-        self.velocity = Vector2D(-0.5,0)
 
     def turn_right(self):
         self.direction = 'right'
-        self.velocity = Vector2D(0.5,0)
 
     def turn_up(self):
         self.direction = 'up'
-        self.velocity = Vector2D(0,0.5)
 
     def turn_down(self):
         self.direction = 'down'
-        self.velocity = Vector2D(0,-0.5)
 
     def update(self):
         MovingBody.update(self)
         x = int(numpy.interp(self.position.x, [-30, 30], [0, 60]))
         y = int(numpy.interp(self.position.y, [-22, 22], [0, 45]))
-        print(x,y)
-        if self.direction == 'right':
-            x += 1
-        elif self.direction == 'left':
+        if self.direction == 'left':
             x -= 1
+            if world[x][y] == 1:
+                self.velocity = Vector2D(0)            
+            else:
+                self.velocity = Vector2D(-0.5,0)
+        elif self.direction == 'right':
+            x += 1
+            if world[x][y] == 1:
+                self.velocity = Vector2D(0)            
+            else:
+                self.velocity = Vector2D(0.5,0)
         elif self.direction == 'up':
             y += 1
+            if world[x][y] == 1:
+                self.velocity = Vector2D(0)            
+            else:
+                self.velocity = Vector2D(0,0.5)
         elif self.direction == 'down':
             y -= 1
-        if world[x][y] == 1:
-            self.velocity = Vector2D(0.0)
-            
+            if world[x][y] == 1:
+                self.velocity = Vector2D(0)            
+            else:
+                self.velocity = Vector2D(0,-0.5)
+        # check to see if pac man has eaten any of the nuggets
+        for nugget in self.world.nuggets:
+            if (nugget.position - self.position).magnitude() < 1.9:
+                self.world.nuggets.remove(nugget)
+                
 class PlayPacMan(Game):
 
     DELAY_START      = 150
@@ -149,7 +158,7 @@ class PlayPacMan(Game):
         for x in range(-30, 30):
             for y in range(9, 10):
                 self.nuggets.append(Nugget(self, x, y))
-        for x in range(2, 3):
+        for x in range(0, 1):
             for y in range(-30, 30):
                 self.nuggets.append(Nugget(self, x, y))
 
