@@ -4,9 +4,19 @@ from geometry import Point2D, Vector2D
 import math
 import random
 import time
-import numpy
 
 TIME_STEP = 0.5
+
+def translate(value, leftMin, leftMax, rightMin, rightMax):
+    # Figure out how 'wide' each range is
+    leftSpan = leftMax - leftMin
+    rightSpan = rightMax - rightMin
+
+    # Convert the left range into a 0-1 range (float)
+    valueScaled = float(value - leftMin) / float(leftSpan)
+
+    # Convert the 0-1 range into a value in the right range.
+    return rightMin + (valueScaled * rightSpan)
 
 class MovingBody(Agent):
 
@@ -38,6 +48,7 @@ world = [ [1] * 45 ] * 60
 world[30] = [0] * 60
 for r in world:
     r[31] = 0
+
 
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
@@ -105,8 +116,8 @@ class PacMan(MovingBody):
 
     def update(self):
         MovingBody.update(self)
-        x = int(numpy.interp(self.position.x, [-30, 30], [0, 60]))
-        y = int(numpy.interp(self.position.y, [-22, 22], [0, 45]))
+        x = int(translate(self.position.x, 0, 60, -30, 30))
+        y = int(translate(self.position.y, 0, 45, -22, 22))
         if self.direction == 'left':
             x -= 1
             if world[x][y] == 1:
@@ -154,13 +165,25 @@ class PlayPacMan(Game):
         self.started = False
 
         self.PacMan = PacMan(self)
+
+        # self.nuggets = []
+        # for x in range(-30, 30):
+        #     for y in range(9, 10):
+        #         self.nuggets.append(Nugget(self, x, y))
+        # for x in range(0, 1):
+        #     for y in range(-30, 30):
+        #         self.nuggets.append(Nugget(self, x, y))
+
         self.nuggets = []
-        for x in range(-30, 30):
-            for y in range(9, 10):
-                self.nuggets.append(Nugget(self, x, y))
-        for x in range(0, 1):
-            for y in range(-30, 30):
-                self.nuggets.append(Nugget(self, x, y))
+        for x, r in enumerate(world):
+            for y, c in enumerate(r):
+                if c == 0:
+                    # x = int(numpy.interp(x, [0, 60], [-30, 30]))
+                    # y = int(numpy.interp(y, [0, 45], [-22, 22])) + .45
+                    x = int(translate(x, 0, 60, -30, 30))
+                    y = int(translate(y, 0, 45, -22, 22))
+                    self.nuggets.append(Nugget(self, x, y))
+                    
 
     def handle_keypress(self,event):
         Game.handle_keypress(self,event)
