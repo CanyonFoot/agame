@@ -202,20 +202,36 @@ class PlayPacMan(Game):
         self.walls = []
 
         counter = 0
+
+        wallMap = [ [ 0 for x in range(45) ] for x in range(60) ]
+
         for x, r in enumerate(gameWorld):
             for y, c in enumerate(r):
                 h = translate(x, 0, 60, -30, 30)
                 v = translate(y, 0, 45, -22, 22) - 0.5
                 if gameWorld[x][y] == 0:
                     self.nuggets.append(Nugget(self, h, v))
-                else:
+
+                    wallMap[x][y] -= 1000
+                    if len(wallMap) > x+1:
+                        wallMap[x+1][y] += 5
+                    if len(wallMap) > x-1:
+                        wallMap[x-1][y] += 5
+                    if len(wallMap[x]) > y+1:
+                        wallMap[x][y+1] += 5
+                    if len(wallMap[x]) > y-1:
+                        wallMap[x][y-1] += 5
+                   
+        for x, r in enumerate(wallMap):
+            for y, c in enumerate(r):
+                h = translate(x, 0, 60, -30, 30)
+                v = translate(y, 0, 45, -22, 22) - 0.5
+                print(c)
+                if wallMap[x][y] > 0:
                     self.walls.append(Wall(self, h, v))
 
     def addPoints(self, p):
         self.score += 1
-        print(self.score)
-                    
-
     def handle_keypress(self,event):
         Game.handle_keypress(self,event)
         if event.char == 'i':
