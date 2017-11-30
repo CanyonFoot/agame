@@ -27,7 +27,7 @@ class Agent:
         self.ticks += 1
 
     def leave(self):
-        self.world.remove(self)
+        self.world.remove(self)      
 
 class Game(Frame):
 
@@ -56,6 +56,7 @@ class Game(Frame):
 
         # Populate the world with creatures
         self.agents = []
+        self.display = 'test'
         self.GAME_OVER = False
 
         # Initialize the graphics window.
@@ -108,8 +109,9 @@ class Game(Frame):
         self.clear()
         for agent in self.agents:
             self.draw_shape(agent.shape(),agent.color())
+        self.canvas.create_text(100, 25, font='helvetica 28', fill='#FFF', text=self.display)
         Frame.update(self)
-
+        
     def draw_shape(self, shape, color):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
@@ -123,7 +125,7 @@ class Game(Frame):
     def clear(self):
         self.canvas.delete('all')
         self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000")
-
+        
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
 
