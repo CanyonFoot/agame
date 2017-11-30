@@ -44,17 +44,17 @@ class MovingBody(Agent):
         self.accel    = self.steer()
         self.world.trim(self)
 
-gameWorld = [ [ 1 for x in range(45) ] for x in range(60) ]
+gameWorld = [ [ 1 for x in range(45) ] for x in range(30) ]
 
-for x in range(5, 40):
+for x in range(5, 20):
     gameWorld[x][23] = 0
     
 # random segment generator
 for q in range(0, 25):
-    x = random.randint(0, 59)
+    x = random.randint(0, 29)
     y = random.randint(0, 44)
     upDown = random.randint(0,1)
-    howFar = random.randint(0, 40)
+    howFar = random.randint(0, 20)
     if upDown == 0:
         for l in range(0, howFar):
             gameWorld[x][y - l] = 0
@@ -149,7 +149,7 @@ class PacMan(MovingBody):
 
     def update(self):
         MovingBody.update(self)
-        x = int(translate(self.position.x, 0, 60, -30, 30))
+        x = int(translate(self.position.x, 0, 30, -15, 15))
         y = int(translate(self.position.y, 0, 45, -22.5, 22.5))
         if self.direction == 'left':
             x -= 1
@@ -157,24 +157,28 @@ class PacMan(MovingBody):
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(-0.5,0)
+                print('moving')                
         elif self.direction == 'right':
             x += 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0.5,0)
+                print('moving')        
         elif self.direction == 'up':
             y += 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0,0.5)
+                print('moving')
         elif self.direction == 'down':
             y -= 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0,-0.5)
+                print('moving')
         # check to see if pac man has eaten any of the nuggets
         for nugget in self.world.nuggets:
             if (nugget.position - self.position).magnitude() < 1:
@@ -188,7 +192,7 @@ class PlayPacMan(Game):
     INTRODUCE_CHANCE = 0.01
     
     def __init__(self):
-        Game.__init__(self,"PACMAN!!!",60.0,45.0,800,600,topology='wrapped')
+        Game.__init__(self,"PACMAN!!!",30.0,45.0,400,600,topology='wrapped')
 
         self.level = 1
         self.score = 0
@@ -203,11 +207,11 @@ class PlayPacMan(Game):
 
         counter = 0
 
-        wallMap = [ [ 0 for x in range(45) ] for x in range(60) ]
+        wallMap = [ [ 0 for x in range(45) ] for x in range(30) ]
 
         for x, r in enumerate(gameWorld):
             for y, c in enumerate(r):
-                h = translate(x, 0, 60, -30, 30)
+                h = translate(x, 0, 30, -15, 15) - 0.2
                 v = translate(y, 0, 45, -22, 22) - 0.5
                 if gameWorld[x][y] == 0:
                     self.nuggets.append(Nugget(self, h, v))
@@ -224,9 +228,8 @@ class PlayPacMan(Game):
                    
         for x, r in enumerate(wallMap):
             for y, c in enumerate(r):
-                h = translate(x, 0, 60, -30, 30)
+                h = translate(x, 0, 30, -15, 15) - 0.2
                 v = translate(y, 0, 45, -22, 22) - 0.5
-                print(c)
                 if wallMap[x][y] > 0:
                     self.walls.append(Wall(self, h, v))
 
