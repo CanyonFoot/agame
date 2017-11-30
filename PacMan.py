@@ -157,28 +157,24 @@ class PacMan(MovingBody):
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(-0.5,0)
-                print('moving')                
         elif self.direction == 'right':
             x += 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0.5,0)
-                print('moving')        
         elif self.direction == 'up':
             y += 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0,0.5)
-                print('moving')
         elif self.direction == 'down':
             y -= 1
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)            
             else:
                 self.velocity = Vector2D(0,-0.5)
-                print('moving')
         # check to see if pac man has eaten any of the nuggets
         for nugget in self.world.nuggets:
             if (nugget.position - self.position).magnitude() < 1:
