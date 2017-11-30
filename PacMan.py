@@ -52,25 +52,31 @@ for r in world:
 
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
-        position0 = Point2D(x + .2, y + .2)
+        position0 = Point2D(x, y)
         MovingBody.__init__(self, position0, Vector2D(0), world)
 
     def color(self):
         return "#F0C080"
-
+    
+    def remove(self):
+        for i, nugget in enumerate(self.world.nuggets):
+            if self == nugget:
+                # move nugget to somewhere else
+                self.world.nuggets[i].position = Point2D(30, 22)
+                
 class PacMan(MovingBody):
     
     ACCELERATION   = 0.0
     MAX_SPEED      = 2.0
 
     def __init__(self,world):
-        position0    = Point2D()
+        position0    = Point2D(0,0)
         velocity0    = Vector2D(.5,0.0)
         MovingBody.__init__(self,position0,velocity0,world)
         self.speed   = 0.0
         self.impulse = 0
         self.angle = 90
-        self.direction = 'right'
+        self.direction = 'left'
 
     def color(self):
         return "#F0C080"
@@ -82,7 +88,6 @@ class PacMan(MovingBody):
     def shape(self):
         h  = self.get_heading()
         hp = h.perp()
-        print(hp)
         pacShape = []
         pacShape.append(self.position + Vector2D(-.5, -1))
         pacShape.append(self.position + Vector2D(.5, -1))
@@ -117,7 +122,7 @@ class PacMan(MovingBody):
     def update(self):
         MovingBody.update(self)
         x = int(translate(self.position.x, 0, 60, -30, 30))
-        y = int(translate(self.position.y, 0, 45, -22, 22))
+        y = int(translate(self.position.y, 0, 45, -22.5, 22.5))
         if self.direction == 'left':
             x -= 1
             if world[x][y] == 1:
@@ -144,8 +149,9 @@ class PacMan(MovingBody):
                 self.velocity = Vector2D(0,-0.5)
         # check to see if pac man has eaten any of the nuggets
         for nugget in self.world.nuggets:
-            if (nugget.position - self.position).magnitude() < 1.9:
-                self.world.nuggets.remove(nugget)
+            if (nugget.position - self.position).magnitude() < 1:
+                self.world.addPoints(1)
+                nugget.remove()
                 
 class PlayPacMan(Game):
 
@@ -156,8 +162,6 @@ class PlayPacMan(Game):
     def __init__(self):
         Game.__init__(self,"PACMAN!!!",60.0,45.0,800,600,topology='wrapped')
 
-        self.number_of_asteroids = 0
-        self.number_of_shrapnel = 0
         self.level = 1
         self.score = 0
 
@@ -166,23 +170,17 @@ class PlayPacMan(Game):
 
         self.PacMan = PacMan(self)
 
-        # self.nuggets = []
-        # for x in range(-30, 30):
-        #     for y in range(9, 10):
-        #         self.nuggets.append(Nugget(self, x, y))
-        # for x in range(0, 1):
-        #     for y in range(-30, 30):
-        #         self.nuggets.append(Nugget(self, x, y))
-
         self.nuggets = []
         for x, r in enumerate(world):
             for y, c in enumerate(r):
                 if c == 0:
-                    # x = int(numpy.interp(x, [0, 60], [-30, 30]))
-                    # y = int(numpy.interp(y, [0, 45], [-22, 22])) + .45
-                    x = int(translate(x, 0, 60, -30, 30))
-                    y = int(translate(y, 0, 45, -22, 22))
-                    self.nuggets.append(Nugget(self, x, y))
+                    h = translate(x, 0, 60, -30, 30)
+                    v = translate(y, 0, 45, -22, 22) - 0.5
+                    self.nuggets.append(Nugget(self, h, v))
+
+    def addPoints(self, p):
+        self.score += 1
+        print(self.score)
                     
 
     def handle_keypress(self,event):
