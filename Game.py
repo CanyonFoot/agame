@@ -60,6 +60,7 @@ class Game(Frame):
     #
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
 
+        self.paused = False
         # Register the world coordinate and graphics parameters.
         self.WIDTH = w
         self.HEIGHT = h

@@ -244,6 +244,8 @@ class PlayPacMan(Game):
             self.PacMan.turn_up()
         elif event.char == 's':
             self.PacMan.turn_down()
+        elif event.char == 'p':
+            self.paused = not self.paused
         
         
     def update(self):
