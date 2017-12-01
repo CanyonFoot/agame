@@ -46,21 +46,63 @@ class MovingBody(Agent):
 
 gameWorld = [ [ 1 for x in range(45) ] for x in range(30) ]
 
-for x in range(5, 20):
-    gameWorld[x][23] = 0
     
-# random segment generator
-for q in range(0, 25):
-    x = random.randint(0, 29)
-    y = random.randint(0, 44)
-    upDown = random.randint(0,1)
-    howFar = random.randint(0, 20)
-    if upDown == 0:
-        for l in range(0, howFar):
-            gameWorld[x][y - l] = 0
+def index_exists(ls, i):
+    return (0 <= i < len(ls)) or (-len(ls) <= i < 0)
+
+def createPaths(x,y):
+    h = int(translate(x, 0, 30, -15, 15))
+    v = int(translate(y, 0, 45, -22.5, 22.5))
+    # up or left only because we subtract from the array so it can wrap
+    directions = ['left','up']
+    direction = directions[random.randint(0,1)]
+    length = random.randint(0,15)
+
+    if direction == 'up':
+        print('--UP--')
+        if index_exists(gameWorld, h) == False:
+            print('x-axis out out of range')
+            return createPaths(15, 22)
+        elif index_exists(gameWorld[h], v - length) == False:
+            print('y-axis out of range')
+            return createPaths(15, 22)
+        else:
+            print('ok')
     else:
-        for l in range(0, howFar):
-            gameWorld[x - l][y] = 0
+        print('--LEFT--')
+        if index_exists(gameWorld, h - length) == False:
+            print('x-axis out of range')
+            return createPaths(15, 22)
+        else:
+            print('ok')
+
+    for i in range(0, length):
+        if direction == 'up' and index_exists(gameWorld, h) and index_exists(gameWorld[h], v - length):
+            gameWorld[h][v - i] = 0
+        elif direction == 'left' and index_exists(gameWorld, h - length):
+            gameWorld[h - i][v] = 0
+
+    replicateOdds = 0.2
+    if direction == 'up' and random.random() > replicateOdds:
+        createPaths(x, y - length)
+    elif direction == 'left' and random.random() > replicateOdds:
+        createPaths(x - length, y)
+    else:
+        print('path terminated')
+
+
+createPaths(0,0)
+# random segment generator
+# for q in range(0, 25):
+#     
+#     upDown = random.randint(0,1)
+#     howFar = random.randint(0, 20)
+#     if upDown == 0:
+#         for l in range(0, howFar):
+#             gameWorld[x][y - l] = 0
+#     else:
+#         for l in range(0, howFar):
+#             gameWorld[x - l][y] = 0
 
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
@@ -176,7 +218,6 @@ class PacMan(MovingBody):
         elif self.direction == 'right':
             verticalBias = 0
             horizontalBias = 0.5
-        print(verticalBias)
 
         leftClear = gameWorld[x-1][y] == 0
         if leftClear and self.intention == 'left':
