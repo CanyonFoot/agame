@@ -105,6 +105,10 @@ class PacMan(MovingBody):
         self.impulse = 0
         self.angle = 90
         self.direction = 'left'
+        self.intention = self.direction
+        self.aligned = True
+        self.verticalBias = 0
+        self.horizontalBias = 0
 
     def color(self):
         return "#F0C080"
@@ -136,21 +140,72 @@ class PacMan(MovingBody):
         return pacShape
         
     def turn_left(self):
-        self.direction = 'left'
+        self.intention = 'left'
+        self.aligned = False
 
     def turn_right(self):
-        self.direction = 'right'
+        self.intention = 'right'
+        self.aligned = False
 
     def turn_up(self):
-        self.direction = 'up'
+        self.intention = 'up'
+        self.aligned = False
 
     def turn_down(self):
-        self.direction = 'down'
+        self.intention = 'down'
+        self.aligned = False
 
     def update(self):
         MovingBody.update(self)
         x = int(translate(self.position.x, 0, 30, -15, 15))
         y = int(translate(self.position.y, 0, 45, -22.5, 22.5))
+
+        aligned = self.aligned
+        verticalBias = self.verticalBias
+        horizontalBias = self.horizontalBias
+
+        if self.direction == 'up':
+            verticalBias = 0.5
+            horizontalBias = 0
+        elif self.direction == 'down':
+            verticalBias = -0.5
+            horizontalBias = 0
+        elif self.direction == 'left':
+            verticalBias = 0
+            horizontalBias = -0.5        
+        elif self.direction == 'right':
+            verticalBias = 0
+            horizontalBias = 0.5
+        print(verticalBias)
+
+        leftClear = gameWorld[x-1][y] == 0
+        if leftClear and self.intention == 'left':
+            if not aligned:
+                self.position.y = int(self.position.y + verticalBias)
+                self.aligned = True
+            self.direction = 'left'
+        rightClear = gameWorld[x+1][y] == 0
+        if rightClear and self.intention == 'right':
+            if not aligned:
+                self.position.y = int(self.position.y + verticalBias)
+                self.aligned = True
+            self.direction = 'right'
+        upClear = gameWorld[x][y+1] == 0
+        if upClear and self.intention == 'up':
+            if not aligned:
+                self.position.x = int(self.position.x + horizontalBias)
+                self.aligned = True
+            self.direction = 'up'
+        downClear = gameWorld[x][y-1] == 0
+        if downClear and self.intention == 'down':
+            if not aligned:
+                self.position.x = int(self.position.x + horizontalBias)
+                self.aligned = True
+            self.direction = 'down'
+
+        # print(self.intention, self.position.y, self.position.x)
+
+        
         if self.direction == 'left':
             x -= 1
             if gameWorld[x][y] == 1:
