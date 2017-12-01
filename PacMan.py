@@ -221,13 +221,14 @@ class PlayPacMan(Game):
                         wallMap[x][y+1] += 5
                     if len(wallMap[x]) > y-1:
                         wallMap[x][y-1] += 5
+        self.walls = wallMap
                    
-        for x, r in enumerate(wallMap):
-            for y, c in enumerate(r):
-                h = translate(x, 0, 30, -15, 15) - 0.2
-                v = translate(y, 0, 45, -22, 22) - 0.5
-                if wallMap[x][y] > 0:
-                    self.walls.append(Wall(self, h, v))
+        # for x, r in enumerate(wallMap):
+        #     for y, c in enumerate(r):
+        #         h = translate(x, 0, 30, -15, 15) - 0.2
+        #         v = translate(y, 0, 45, -22, 22) - 0.5
+        #         if wallMap[x][y] > 0:
+        #             self.walls.append(Wall(self, h, v))
 
     def addPoints(self, p):
         self.score += 1

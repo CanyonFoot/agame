@@ -1,6 +1,18 @@
 from tkinter import *
-from geometry import Bounds, Point2D
+from geometry import Bounds, Point2D, Vector2D
 import sys
+import time
+
+def translate(value, leftMin, leftMax, rightMin, rightMax):
+    # Figure out how 'wide' each range is
+    leftSpan = leftMax - leftMin
+    rightSpan = rightMax - rightMin
+
+    # Convert the left range into a 0-1 range (float)
+    valueScaled = float(value - leftMin) / float(leftSpan)
+
+    # Convert the 0-1 range into a value in the right range.
+    return rightMin + (valueScaled * rightSpan)
 
 class Agent:
 
@@ -49,6 +61,8 @@ class Game(Frame):
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
 
         # Register the world coordinate and graphics parameters.
+        self.WIDTH = w
+        self.HEIGHT = h
         self.WINDOW_WIDTH = ww
         self.WINDOW_HEIGHT = wh
         self.bounds = Bounds(-w/2,-h/2,w/2,h/2)
@@ -58,6 +72,9 @@ class Game(Frame):
         self.agents = []
         self.display = 'test'
         self.GAME_OVER = False
+
+        # Populate the background with the walls for pacman
+        self.walls = []
 
         # Initialize the graphics window.
         self.root = Tk()
@@ -125,6 +142,25 @@ class Game(Frame):
     def clear(self):
         self.canvas.delete('all')
         self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000")
+        x = 15 * (self.WINDOW_WIDTH / self.WIDTH)
+        y = 22 * (self.WINDOW_HEIGHT / self.HEIGHT)
+        p1 = Point2D(.5,.5)       
+        p2 = Point2D(-.5, .5)        
+        p3 = Point2D(-.5, -.5)        
+        p4 = Point2D(.5, -.5)
+
+        walls = self.walls
+        for x, r in enumerate(walls):
+            for y, c in enumerate(r):
+                h = translate(x, 0, 30, -15, 15) - .2
+                v = translate(y, 0, 45, -22, 22) - .45
+                if c > 0:
+                    p1 = Point2D(.5 + h,.5 + v)       
+                    p2 = Point2D(-.5 + h, .5 + v)        
+                    p3 = Point2D(-.5 + h, -.5 + v)        
+                    p4 = Point2D(.5 + h, -.5 + v)
+
+                    self.draw_shape([p1,p2,p3,p4], 'blue')
         
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
