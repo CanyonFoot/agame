@@ -121,14 +121,15 @@ class Game(Frame):
         self.agents.remove(agent)
 
     def update(self):
-        for agent in self.agents:
-            agent.update()
-        self.clear()
-        for agent in self.agents:
-            self.draw_shape(agent.shape(),agent.color())
-        self.canvas.create_text(100, 25, font='helvetica 28', fill='#FFF', text=self.display)
+        if self.paused == False:
+            for agent in self.agents:
+                agent.update()
+            self.clear()
+            for agent in self.agents:
+                self.draw_shape(agent.shape(),agent.color())
+            self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display)
         Frame.update(self)
-        
+
     def draw_shape(self, shape, color):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
@@ -152,7 +153,7 @@ class Game(Frame):
         walls = self.walls
         for x, r in enumerate(walls):
             for y, c in enumerate(r):
-                h = translate(x, 0, 30, -15, 15) - .2
+                h = translate(x, 0, 30, -15, 15) 
                 v = translate(y, 0, 45, -22, 22) - .45
                 if c > 0:
                     p1 = Point2D(.5 + h,.5 + v)       
