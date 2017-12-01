@@ -75,6 +75,7 @@ class Game(Frame):
         self.GAME_OVER = False
 
         # Populate the background with the walls for pacman
+        self.prevWalls = None
         self.walls = []
 
         # Initialize the graphics window.
@@ -122,6 +123,9 @@ class Game(Frame):
         self.agents.remove(agent)
 
     def update(self):
+        if self.prevWalls != self.walls:
+            self.drawBackground()            
+            self.prevWalls = self.walls
         if self.paused == False:
             for agent in self.agents:
                 agent.update()
@@ -131,7 +135,7 @@ class Game(Frame):
             self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display)
         Frame.update(self)
 
-    def draw_shape(self, shape, color):
+    def draw_shape(self, shape, color, tag='rewdrawable'):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
         x = self.bounds.xmin
@@ -139,11 +143,10 @@ class Game(Frame):
         points = [ ((p.x - x)*wh/h, wh - (p.y - y)* wh/h) for p in shape ]
         first_point = points[0]
         points.append(first_point)
-        self.canvas.create_polygon(points, fill=color)
+        self.canvas.create_polygon(points, fill=color, tags=tag)
 
-    def clear(self):
-        self.canvas.delete('all')
-        self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000")
+    def drawBackground(self):
+        self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000", tags='static')
         x = 15 * (self.WINDOW_WIDTH / self.WIDTH)
         y = 22 * (self.WINDOW_HEIGHT / self.HEIGHT)
         p1 = Point2D(.5,.5)       
@@ -162,7 +165,10 @@ class Game(Frame):
                     p3 = Point2D(-.5 + h, -.5 + v)        
                     p4 = Point2D(.5 + h, -.5 + v)
 
-                    self.draw_shape([p1,p2,p3,p4], 'blue')
+                    self.draw_shape([p1,p2,p3,p4], 'blue', 'static')
+
+    def clear(self):
+        self.canvas.delete('rewdrawable')
         
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
