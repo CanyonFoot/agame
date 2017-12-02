@@ -20,7 +20,7 @@ class Agent:
 
     def __init__(self,position,world):
         self.position = position
-        self.world    = world 
+        self.world    = world
         self.world.add(self)
         self.ticks    = 0
 
@@ -29,9 +29,9 @@ class Agent:
         return "#0000"+str(self.INTENSITIES[a])+"0"
 
     def shape(self):
-        p1 = self.position + Vector2D( 0.125, 0.125)       
-        p2 = self.position + Vector2D(-0.125, 0.125)        
-        p3 = self.position + Vector2D(-0.125,-0.125)        
+        p1 = self.position + Vector2D( 0.125, 0.125)
+        p2 = self.position + Vector2D(-0.125, 0.125)
+        p3 = self.position + Vector2D(-0.125,-0.125)
         p4 = self.position + Vector2D( 0.125,-0.125)
         return [p1,p2,p3,p4]
 
@@ -39,7 +39,7 @@ class Agent:
         self.ticks += 1
 
     def leave(self):
-        self.world.remove(self)      
+        self.world.remove(self)
 
 class Game(Frame):
 
@@ -48,19 +48,21 @@ class Game(Frame):
     # Creates a world with a coordinate system of width w and height
     # h, with x coordinates ranging between -w/2 and w/2, and with y
     # coordinates ranging between -h/2 and h/2.
-    # 
-    # Creates a corresponding graphics window, for rendering 
+    #
+    # Creates a corresponding graphics window, for rendering
     # the world, with pixel width ww and pixel height wh.
     #
     # The window will be named by the string given in name.
     #
     # The topology string is used by the 'trim' method to (maybe) keep
-    # bodies within the frame of the world. (For example, 'wrapped' 
+    # bodies within the frame of the world. (For example, 'wrapped'
     # yields "SPACEWAR" topology, i.e. a torus.)
     #
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
 
         self.paused = False
+        self.gameOver = False
+
         # Register the world coordinate and graphics parameters.
         self.WIDTH = w
         self.HEIGHT = h
@@ -124,18 +126,21 @@ class Game(Frame):
 
     def update(self):
         if self.prevWalls != self.walls:
-            self.drawBackground()            
+            self.drawBackground()
             self.prevWalls = self.walls
+        if self.gameOver == True:
+            self.paused = True
+            self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='game OVER!\nNO MORE!!', tags='static')
         if self.paused == False:
             for agent in self.agents:
                 agent.update()
             self.clear()
             for agent in self.agents:
                 self.draw_shape(agent.shape(),agent.color())
-            self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display)
+            self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display, tags='redrawable')
         Frame.update(self)
 
-    def draw_shape(self, shape, color, tag='rewdrawable'):
+    def draw_shape(self, shape, color, tag='redrawable'):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
         x = self.bounds.xmin
@@ -149,27 +154,27 @@ class Game(Frame):
         self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000", tags='static')
         x = 15 * (self.WINDOW_WIDTH / self.WIDTH)
         y = 22 * (self.WINDOW_HEIGHT / self.HEIGHT)
-        p1 = Point2D(.5,.5)       
-        p2 = Point2D(-.5, .5)        
-        p3 = Point2D(-.5, -.5)        
+        p1 = Point2D(.5,.5)
+        p2 = Point2D(-.5, .5)
+        p3 = Point2D(-.5, -.5)
         p4 = Point2D(.5, -.5)
 
         walls = self.walls
         for x, r in enumerate(walls):
             for y, c in enumerate(r):
-                h = translate(x, 0, 30, -15, 15) 
+                h = translate(x, 0, 30, -15, 15)
                 v = translate(y, 0, 45, -22, 22) - .45
                 if c > 0:
-                    p1 = Point2D(.5 + h,.5 + v)       
-                    p2 = Point2D(-.5 + h, .5 + v)        
-                    p3 = Point2D(-.5 + h, -.5 + v)        
+                    p1 = Point2D(.5 + h,.5 + v)
+                    p2 = Point2D(-.5 + h, .5 + v)
+                    p3 = Point2D(-.5 + h, -.5 + v)
                     p4 = Point2D(.5 + h, -.5 + v)
 
                     self.draw_shape([p1,p2,p3,p4], 'blue', 'static')
 
     def clear(self):
-        self.canvas.delete('rewdrawable')
-        
+        self.canvas.delete('redrawable')
+
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
 
