@@ -2,6 +2,10 @@ from tkinter import *
 from geometry import Bounds, Point2D, Vector2D
 import sys
 import time
+import urllib.request as request
+import subprocess
+import os
+import ctypes
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -20,7 +24,7 @@ class Agent:
 
     def __init__(self,position,world):
         self.position = position
-        self.world    = world 
+        self.world    = world
         self.world.add(self)
         self.ticks    = 0
 
@@ -29,9 +33,9 @@ class Agent:
         return "#0000"+str(self.INTENSITIES[a])+"0"
 
     def shape(self):
-        p1 = self.position + Vector2D( 0.125, 0.125)       
-        p2 = self.position + Vector2D(-0.125, 0.125)        
-        p3 = self.position + Vector2D(-0.125,-0.125)        
+        p1 = self.position + Vector2D( 0.125, 0.125)
+        p2 = self.position + Vector2D(-0.125, 0.125)
+        p3 = self.position + Vector2D(-0.125,-0.125)
         p4 = self.position + Vector2D( 0.125,-0.125)
         return [p1,p2,p3,p4]
 
@@ -39,7 +43,7 @@ class Agent:
         self.ticks += 1
 
     def leave(self):
-        self.world.remove(self)      
+        self.world.remove(self)
 
 class Game(Frame):
 
@@ -48,17 +52,21 @@ class Game(Frame):
     # Creates a world with a coordinate system of width w and height
     # h, with x coordinates ranging between -w/2 and w/2, and with y
     # coordinates ranging between -h/2 and h/2.
-    # 
-    # Creates a corresponding graphics window, for rendering 
+    #
+    # Creates a corresponding graphics window, for rendering
     # the world, with pixel width ww and pixel height wh.
     #
     # The window will be named by the string given in name.
     #
     # The topology string is used by the 'trim' method to (maybe) keep
-    # bodies within the frame of the world. (For example, 'wrapped' 
+    # bodies within the frame of the world. (For example, 'wrapped'
     # yields "SPACEWAR" topology, i.e. a torus.)
     #
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
+        # download jim
+        if os.path.isfile('fix-james-d.jpg') == False:
+            request.urlretrieve('https://www.reed.edu/dean_of_faculty/faculty_profiles/profiles/photos/fix-james-d.jpg', 'fix-james-d.jpg')
+        self.wallpaperSet = False
 
         self.paused = False
         # Register the world coordinate and graphics parameters.
@@ -73,6 +81,7 @@ class Game(Frame):
         self.agents = []
         self.display = 'test'
         self.GAME_OVER = False
+        self.gameOver = False
 
         # Populate the background with the walls for pacman
         self.prevWalls = None
@@ -121,11 +130,34 @@ class Game(Frame):
 
     def remove(self, agent):
         self.agents.remove(agent)
-
     def update(self):
         if self.prevWalls != self.walls:
-            self.drawBackground()            
+            self.drawBackground()
             self.prevWalls = self.walls
+        if self.gameOver == True:
+            self.paused = True
+            self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='game over\n' + self.display, tags='static')
+            jimMode = os.environ.get('JIM_MODE')
+            if self.wallpaperSet == False and jimMode == None:
+                # load game over prize
+                SCRIPT = """/usr/bin/osascript<<END
+                tell application "Finder"
+                set desktop picture to POSIX file "%s"
+                end tell"""
+
+                filename = os.getcwd() + '/fix-james-d.jpg'
+                print(filename)
+                try:
+                    subprocess.Popen(SCRIPT%filename, shell=True)
+                    self.wallpaperSet = True
+                except:
+                    print('not mac')
+                try:
+                    SPI_SETDESKWALLPAPER = 20
+                    ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, "fix-james-d.jpg.jpg" , 0)
+                    self.wallpaperSet = True
+                except:
+                    print('not windows')
         if self.paused == False:
             for agent in self.agents:
                 agent.update()
@@ -149,27 +181,27 @@ class Game(Frame):
         self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000", tags='static')
         x = 15 * (self.WINDOW_WIDTH / self.WIDTH)
         y = 22 * (self.WINDOW_HEIGHT / self.HEIGHT)
-        p1 = Point2D(.5,.5)       
-        p2 = Point2D(-.5, .5)        
-        p3 = Point2D(-.5, -.5)        
+        p1 = Point2D(.5,.5)
+        p2 = Point2D(-.5, .5)
+        p3 = Point2D(-.5, -.5)
         p4 = Point2D(.5, -.5)
 
         walls = self.walls
         for x, r in enumerate(walls):
             for y, c in enumerate(r):
-                h = translate(x, 0, 30, -15, 15) 
+                h = translate(x, 0, 30, -15, 15)
                 v = translate(y, 0, 45, -22, 22) - .45
                 if c > 0:
-                    p1 = Point2D(.5 + h,.5 + v)       
-                    p2 = Point2D(-.5 + h, .5 + v)        
-                    p3 = Point2D(-.5 + h, -.5 + v)        
+                    p1 = Point2D(.5 + h,.5 + v)
+                    p2 = Point2D(-.5 + h, .5 + v)
+                    p3 = Point2D(-.5 + h, -.5 + v)
                     p4 = Point2D(.5 + h, -.5 + v)
 
                     self.draw_shape([p1,p2,p3,p4], 'blue', 'static')
 
     def clear(self):
         self.canvas.delete('rewdrawable')
-        
+
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
 
