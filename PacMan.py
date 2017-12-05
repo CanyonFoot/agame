@@ -75,6 +75,19 @@ def draw_map():
     draw_vert(secondnum, firstnum//2, 45 - firstnum//2)
     draw_vert(30 - secondnum, firstnum//2, 45 - firstnum//2)
 
+# random segment generator
+for q in range(0, 10):
+    x = random.randint(0, 29)
+    y = random.randint(0, 44)
+    upDown = random.randint(0,1)
+    howFar = random.randint(0, 20)
+    if upDown == 0:
+        for l in range(0, howFar):
+            gameWorld[x][y - l] = 0
+    else:
+        for l in range(0, howFar):
+            gameWorld[x - l][y] = 0
+
 
 draw_map()
 
@@ -147,25 +160,37 @@ class MazeBoundAgent(MovingBody):
 
         aligned = self.aligned
         clearance = 0.5
-        leftClear = gameWorld[int(x-clearance)][y] == 0
+        if len(gameWorld) > abs(x - clearance):
+            leftClear = gameWorld[int(x-clearance - 0.5)][y] == 0
+        else:
+            leftClear = gameWorld[int(x-clearance)][y] == 0
         if leftClear and self.intention == 'left':
             if not aligned:
                 self.position.y = int(self.position.y + verticalBias)
                 self.aligned = True
             self.direction = 'left'
+
         rightClear = gameWorld[int(x+clearance)][y] == 0
         if rightClear and self.intention == 'right':
             if not aligned:
                 self.position.y = int(self.position.y + verticalBias)
                 self.aligned = True
             self.direction = 'right'
-        upClear = gameWorld[x][int((y+clearance + 1) // 1)] == 0
+
+        if len(gameWorld[x]) - 0.5 > abs(y + clearance):
+            upClear = gameWorld[x][int((y+clearance + 1) // 1)] == 0
+        else:
+            upClear = gameWorld[x][int((y+clearance) // 1)] == 0
         if upClear and self.intention == 'up':
             if not aligned:
                 self.position.x = int(self.position.x + horizontalBias)
                 self.aligned = True
             self.direction = 'up'
-        downClear = gameWorld[x][int((y-clearance) // 1)] == 0
+
+        if len(gameWorld[x]) > abs(y - clearance):
+            downClear = gameWorld[x][int((y-clearance) // 1)] == 0
+        else:
+            downClear = gameWorld[x][int((y-clearance + 1) // 1)] == 0
         if downClear and self.intention == 'down':
             if not aligned:
                 self.position.x = int(self.position.x + horizontalBias)
@@ -195,7 +220,6 @@ class MazeBoundAgent(MovingBody):
             else:
                 self.velocity = Vector2D(0,0.5 * speedMod)
         elif self.direction == 'down':
-            y = int(y - shift)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
