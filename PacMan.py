@@ -147,7 +147,7 @@ class MazeBoundAgent(MovingBody):
 
         aligned = self.aligned
         clearance = 0.5
-        leftClear = gameWorld[int(x-clearance - 0.5)][y] == 0
+        leftClear = gameWorld[int(x-clearance)][y] == 0
         if leftClear and self.intention == 'left':
             if not aligned:
                 self.position.y = int(self.position.y + verticalBias)
@@ -178,7 +178,7 @@ class MazeBoundAgent(MovingBody):
         speedMod = self.speedMod
         if self.direction == 'left':
             x = int(x - shift)
-            if gameWorld[x][y] == 1:
+            if len(gameWorld) < x and gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
                 self.velocity = Vector2D(-0.5 * speedMod,0)
