@@ -78,7 +78,7 @@ class Nugget(MovingBody):
                 self.world.nuggets[i].position = Point2D(30, 22)
 
 class MazeBoundAgent(MovingBody):
-    def __init__(self,world):
+    def __init__(self,world, speedMod = 1):
         position0    = Point2D(0,0)
         velocity0    = Vector2D(.5,0.0)
         MovingBody.__init__(self,position0,velocity0,world)
@@ -87,6 +87,7 @@ class MazeBoundAgent(MovingBody):
         self.aligned = True
         self.verticalBias = 0
         self.horizontalBias = 0
+        self.speedMod = speedMod
 
     def color(self):
         return 'green'
