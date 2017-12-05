@@ -51,17 +51,29 @@ for x in range(5, 20):
     gameWorld[x][23] = 0
 
 # random segment generator
-for q in range(0, 25):
-    x = random.randint(0, 29)
-    y = random.randint(0, 44)
-    upDown = random.randint(0,1)
-    howFar = random.randint(0, 20)
-    if upDown == 0:
-        for l in range(0, howFar):
-            gameWorld[x][y - l] = 0
-    else:
-        for l in range(0, howFar):
-            gameWorld[x - l][y] = 0
+def draw_vert(column, start, end):
+    for x in range(start, end):
+        gameWorld[column][x] = 0
+
+def draw_hor(row, start, end):
+    for x in range(start, end):
+        gameWorld[x][row] = 0
+def draw_map():
+    draw_hor(23, 0, 30)
+    firstnum = random.randint(5, 40)
+    secondnum = random.randint(2, 28)
+    while firstnum in (18, 28) or firstnum % 2 != 0:
+        firstnum = random.randint(5, 40)
+    draw_hor(firstnum, 0, 30)
+    draw_hor(45 - firstnum, 0, 30)
+    draw_vert(secondnum, firstnum, 45 - firstnum)
+    draw_vert(30 - secondnum, firstnum, 45 - firstnum)
+    draw_vert(secondnum, 45 - firstnum, firstnum)
+    draw_vert(30 - secondnum, 45 - firstnum,  firstnum)
+    
+
+
+draw_map()
 
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
