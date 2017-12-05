@@ -159,30 +159,31 @@ class MazeBoundAgent(MovingBody):
         # print(verticalBias, horizontalBias, leftClear, rightClear, upClear, downClear)
 
         shift = 1
+        speedMod = self.speedMod
         if self.direction == 'left':
             x = int(x - shift)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
-                self.velocity = Vector2D(-0.5,0)
+                self.velocity = Vector2D(-0.5 * speedMod,0)
         elif self.direction == 'right':
             x = int(x + shift - 1)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
-                self.velocity = Vector2D(0.5,0)
+                self.velocity = Vector2D(0.5 * speedMod,0)
         elif self.direction == 'up':
             y = int(y + shift)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
-                self.velocity = Vector2D(0,0.5)
+                self.velocity = Vector2D(0,0.5 * speedMod)
         elif self.direction == 'down':
             y = int(y - shift)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
-                self.velocity = Vector2D(0,-0.5)
+                self.velocity = Vector2D(0,-0.5 * speedMod)
 
 
 class PacMan(MazeBoundAgent):
@@ -277,7 +278,7 @@ class PlayPacMan(Game):
         self.PacMan = PacMan(self)
 
         self.ghosts = []
-        self.ghosts.append(Ghost(self))
+        self.ghosts.append(Ghost(self, 0.5))
 
         self.nuggets = []
         self.walls = []
