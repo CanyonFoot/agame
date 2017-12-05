@@ -70,7 +70,10 @@ def draw_map():
     draw_vert(30 - secondnum, firstnum, 45 - firstnum)
     draw_vert(secondnum, 45 - firstnum, firstnum)
     draw_vert(30 - secondnum, 45 - firstnum,  firstnum)
-    
+    draw_hor(firstnum//2, 0, 30)
+    draw_hor(45 - firstnum//2, 0, 30)
+    draw_vert(secondnum, firstnum//2, 45 - firstnum//2)
+    draw_vert(30 - secondnum, firstnum//2, 45 - firstnum//2)
 
 
 draw_map()
