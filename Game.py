@@ -2,6 +2,43 @@ from tkinter import *
 from geometry import Bounds, Point2D, Vector2D
 import sys
 import time
+import urllib.request as request
+import subprocess
+import os
+import ctypes
+from socketIO_client_nexus import SocketIO, BaseNamespace
+import threading
+import queue
+
+q = queue.Queue()
+p = queue.Queue()
+
+def recieveFrame(data):
+    print('frame recieved', data)
+
+def listen():
+    with SocketIO('localhost', 8087, BaseNamespace) as potato:
+        potato.on('frame', recieveFrame)
+        potato.wait()
+
+def broadcast():
+    with SocketIO('localhost', 8087, BaseNamespace) as socket:
+        while True:
+            pass
+            if q.empty() != True:
+                e = q.get()
+                if e == False:
+                    socket.disconnect()
+                socket.emit('checkin', {
+                    'positionX': e.position.x,
+                    'positionY': e.position.y
+                })
+            time.sleep(0.25)
+
+tasks = [listen, broadcast]
+for task in tasks:
+    t = threading.Thread(target=task)
+    t.start()
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -59,6 +96,10 @@ class Game(Frame):
     # yields "SPACEWAR" topology, i.e. a torus.)
     #
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
+        # download jim
+        if os.path.isfile('fix-james-d.jpg') == False:
+            request.urlretrieve('https://www.reed.edu/dean_of_faculty/faculty_profiles/profiles/photos/fix-james-d.jpg', 'fix-james-d.jpg')
+        self.wallpaperSet = False
 
         self.paused = False
         self.gameOver = False
@@ -102,6 +143,7 @@ class Game(Frame):
             self.text = None
         self.pack()
 
+
     def report(self,line=""):
         line += "\n"
         if self.text == None:
@@ -125,12 +167,35 @@ class Game(Frame):
         self.agents.remove(agent)
 
     def update(self):
+        if self.PacMan and self.gameOver != True:
+            q.put(self.PacMan)
         if self.prevWalls != self.walls:
             self.drawBackground()
             self.prevWalls = self.walls
         if self.gameOver == True:
             self.paused = True
-            self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='game OVER!\nNO MORE!!', tags='static')
+            self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='game over\n' + self.display, tags='static')
+            jimMode = os.environ.get('JIM_MODE')
+            if self.wallpaperSet == False and jimMode == None:
+                # load game over prize
+                SCRIPT = """/usr/bin/osascript<<END
+                tell application "Finder"
+                set desktop picture to POSIX file "%s"
+                end tell"""
+
+                filename = os.getcwd() + '/fix-james-d.jpg'
+                print(filename)
+                try:
+                    subprocess.Popen(SCRIPT%filename, shell=True)
+                    self.wallpaperSet = True
+                except:
+                    print('not mac')
+                try:
+                    SPI_SETDESKWALLPAPER = 20
+                    ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, "fix-james-d.jpg.jpg" , 0)
+                    self.wallpaperSet = True
+                except:
+                    print('not windows')
         if self.paused == False:
             for agent in self.agents:
                 agent.update()
