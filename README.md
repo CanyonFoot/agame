@@ -27,7 +27,7 @@ Sometimes the ghosts get stuck, eat them to unstick
 When a ghost kills PacMan, the characters will move to their spawn points, and the game will pause. Press p to unpause
 
 # Work Breakdown
-Jasper: Ghosts, Multiplayer, Movement, Nuggets, PacMan Shape, Walls, World Basics, Colors
+Jasper: Ghosts, Multiplayer, Movement, Nuggets, PacMan Shape, Walls, World Basics, Colors   
 Canyon: Movements, Maze Generation, Standard Map Generation, Sriracha Nuggets, PacMan Death and Ghost Eating
 
 # Points Breakdown
