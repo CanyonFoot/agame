@@ -10,19 +10,29 @@ from socketIO_client_nexus import SocketIO, BaseNamespace
 import threading
 import queue
 
+'''
+queues for sharing information across threads for multiplayer
+q is queue for sending PacMan position to network
+p is for recieving other player's positions
+s is for getting our socket id (used once)
+'''
 q = queue.Queue()
 p = queue.Queue()
 s = queue.Queue()
 
+# called whenever server emits 'frame' event,
+# puts other player's positions into queue
 def recieveFrame(data):
     p.queue.clear()
     p.put(data)
 
+# listens for 'frame' events and calls recieveFrame on each frame
 def listen():
     with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
         socket.on('frame', recieveFrame)
         socket.wait()
 
+# emits checkin events every 0.1 seconds, will show on other client's screen
 def broadcast():
     with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
         s.put(socket._engineIO_session.id)
@@ -36,13 +46,17 @@ def broadcast():
                     'positionX': e.position.x,
                     'positionY': e.position.y
                 })
-            time.sleep(0.25)
+            time.sleep(0.1)
 
+# creates threads for listening and broadcasting
 tasks = [listen, broadcast]
 for task in tasks:
     t = threading.Thread(target=task)
     t.start()
 
+# thank you stackoverflow
+# https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
+# originally I used numpy
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
@@ -101,7 +115,7 @@ class Game(Frame):
     # yields "SPACEWAR" topology, i.e. a torus.)
     #
     def __init__(self, name, w, h, ww, wh, topology = 'wrapped', console_lines = 0):
-        # download jim
+        # download jim if jim is not there to set the wallpaper on game over if JIM_MODE env var is not set to anything
         if os.path.isfile('fix-james-d.jpg') == False:
             request.urlretrieve('https://www.reed.edu/dean_of_faculty/faculty_profiles/profiles/photos/fix-james-d.jpg', 'fix-james-d.jpg')
         self.wallpaperSet = False
@@ -129,6 +143,8 @@ class Game(Frame):
         # Initialize the graphics window.
         self.root = Tk()
         self.root.title(name)
+        # grab window focus after game starts
+        self.root.after(500, lambda: self.root.grab_set_global())
         Frame.__init__(self, self.root)
         self.canvas = Canvas(self.root, width=self.WINDOW_WIDTH, height=self.WINDOW_HEIGHT)
 
@@ -148,17 +164,9 @@ class Game(Frame):
             self.text = None
         self.pack()
 
-        # multiplayer
+        # keep track of multiplayer
         self.otherPlayers = []
         self.socketID = []
-
-    def report(self,line=""):
-        line += "\n"
-        if self.text == None:
-            print(line)
-        else:
-            self.text.insert(END,line)
-            self.text.see(END)
 
     def trim(self,agent):
         if self.topology == 'wrapped':
@@ -175,10 +183,13 @@ class Game(Frame):
         self.agents.remove(agent)
 
     def update(self):
+        # broadcast thread will put socket id in s queue once it connects
         if s.empty():
             pass
         else:
             self.socketID = s.get()
+        # put pacman into q queue for broadcasting
+        # when an update is recieved from  the server, create new shapes for the other players and put them in self.otherPlayers
         if self.PacMan and self.gameOver != True:
             q.put(self.PacMan)
             otherPlayers = p.get()
@@ -197,12 +208,20 @@ class Game(Frame):
 
                     self.otherPlayers.append([p1, p2, p3, p4])
 
+        # if the maze hasn't been drawn yet, draw the MazeBoundAgent
+        # will re-draw the maze if the maze updates
         if self.prevWalls != self.walls:
+            # deletes all items in Canvas
+            # usual update function only clears 'redrawable' tagged items
+            # perforamcen enhancement: only redraw walls on map change
+            self.canvas.delete()
             self.drawBackground()
             self.prevWalls = self.walls
         if self.gameOver == True:
             self.paused = True
             self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='game over\n' + self.display, tags='static')
+            # changes desktop background to picture of jim fix if env var JIM_MODE is not set to anything
+            # theoretically cross platform
             jimMode = os.environ.get('JIM_MODE')
             if self.wallpaperSet == False and jimMode == None:
                 # load game over prize
@@ -230,11 +249,14 @@ class Game(Frame):
             self.clear()
             for agent in self.agents:
                 self.draw_shape(agent.shape(),agent.color())
+            # displays score and lives
             self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display, tags='redrawable')
+            # draw other players
             for shape in self.otherPlayers:
                 self.draw_shape(shape, 'purple')
         Frame.update(self)
 
+    # if tag 'static' is used, it will not be redrawn
     def draw_shape(self, shape, color, tag='redrawable'):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
@@ -245,8 +267,11 @@ class Game(Frame):
         points.append(first_point)
         self.canvas.create_polygon(points, fill=color, tags=tag)
 
+    # draws maze outline
     def drawBackground(self):
+        # black background
         self.canvas.create_rectangle(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT, fill="#000000", tags='static')
+        # translate from matrix coords into display coords
         x = 15 * (self.WINDOW_WIDTH / self.WIDTH)
         y = 22 * (self.WINDOW_HEIGHT / self.HEIGHT)
         p1 = Point2D(.5,.5)
