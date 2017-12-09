@@ -508,12 +508,10 @@ class PlayPacMan(Game):
         if self.PacMan.lives <= 0:
             game.GAME_OVER = True
         if self.nuggets_eaten == len(self.nuggets):
+            self.display = "_________        YOU WIN!" + " Final Score:" + str(self.score)
+            Game.update(self)
             self.paused = True
-            self.display = "_________        YOU WIN" + "Final Score:" + str(self.score)
         Game.update(self)
-        # add ghosts after 60 frames have been rendered
-
-
 
 game = PlayPacMan()
 while not game.GAME_OVER:
