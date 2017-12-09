@@ -254,6 +254,8 @@ class Game(Frame):
             # draw other players
             for shape in self.otherPlayers:
                 self.draw_shape(shape, 'purple')
+        else:
+            self.canvas.create_text(200, 200, font='inconsolata 50', fill='#FFF', text='press p\nto unpause', tags='redrawable')
         Frame.update(self)
 
     # if tag 'static' is used, it will not be redrawn
