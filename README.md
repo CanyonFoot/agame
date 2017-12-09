@@ -5,27 +5,28 @@ You can see your friends play at the same time as you: they appear as purple squ
 # Installation
 agame requires the `socketIO_client_nexus` library for our hi-tech multiplayer functionality. Since there is no singleplayer option, you must install it.
 1. If you don't have pip, you will need to install it. Instructions on how to install pip can be found [here](https://pip.pypa.io/en/stable/installing/).
-2. run `pip install socketIO_client_nexus` to install the library globally.
+2. run `pip install socketIO_client_nexus` to install the library globally.   
+or use virtualenv if you know how to do that :)
 
 # Playing agame
 To play agame, run `python3 PacMan.py` or, if on mac, double-click on `MACS_CLICK_HERE_TO_PLAY.command` (or run `./MACS_CLICK_HERE_TO_PLAY.command`) to play.
 
-Gameplay Notes:
+# Gameplay Notes
 w,s,a,d to control
+
 p to pause
+
 t to teleport to spawn point (for use if PacMan gets stuck)
 
 red nuggets allow PacMan to eat the ghosts
 
 Sometimes the ghosts get stuck, eat them to unstick
+
 When a ghost kills PacMan, the characters will move to their spawn points, and the game will pause. Press p to unpause
 
-Work Breakdown:
-Jasper:
-Ghosts, Multiplayer, Movement, Nuggets, PacMan Shape, Walls, World Basics, Colors
-
+# Work Breakdown
+Jasper: Ghosts, Multiplayer, Movement, Nuggets, PacMan Shape, Walls, World Basics, Colors
 Canyon: Movements, Maze Generation, Standard Map Generation, Sriracha Nuggets, PacMan Death and Ghost Eating
-
 
 # Points Breakdown
 - 2 transporter (Wrapping)
@@ -43,8 +44,6 @@ Canyon: Movements, Maze Generation, Standard Map Generation, Sriracha Nuggets, P
 - 2 shield
 
 
-Important Note:
+**Important Note**  
 I (Canyon) developed the depth first maze function after a conversation with Jim about what turned out to be a different method of random maze production that would be worth many points. I would not have been able to write my function without the help of the internet, but especially a piece of code I found at https://code.activestate.com/recipes/578356-random-maze-generator/.
 I also consulted wikipedia.
-
-
