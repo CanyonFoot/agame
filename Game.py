@@ -12,17 +12,20 @@ import queue
 
 q = queue.Queue()
 p = queue.Queue()
+s = queue.Queue()
 
 def recieveFrame(data):
-    print('frame recieved', data)
+    p.queue.clear()
+    p.put(data)
 
 def listen():
-    with SocketIO('localhost', 8087, BaseNamespace) as potato:
-        potato.on('frame', recieveFrame)
-        potato.wait()
+    with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
+        socket.on('frame', recieveFrame)
+        socket.wait()
 
 def broadcast():
-    with SocketIO('localhost', 8087, BaseNamespace) as socket:
+    with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
+        s.put(socket._engineIO_session.id)
         while True:
             pass
             if q.empty() != True:
@@ -50,6 +53,8 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
+
+socketID = ''
 
 class Agent:
 
@@ -143,6 +148,9 @@ class Game(Frame):
             self.text = None
         self.pack()
 
+        # multiplayer
+        self.otherPlayers = []
+        self.socketID = []
 
     def report(self,line=""):
         line += "\n"
@@ -167,8 +175,28 @@ class Game(Frame):
         self.agents.remove(agent)
 
     def update(self):
+        if s.empty():
+            pass
+        else:
+            self.socketID = s.get()
         if self.PacMan and self.gameOver != True:
             q.put(self.PacMan)
+            otherPlayers = p.get()
+            self.otherPlayers = []
+            for player in otherPlayers:
+                if player != self.socketID:
+                    # h = translate(x, 0, 30, -15, 15)
+                    # v = translate(y, 0, 45, -22, 22) - .45
+                    h = otherPlayers[player]['x']
+                    v = otherPlayers[player]['y']
+                    # print(h, v)
+                    p1 = Point2D(.5 + h,.5 + v)
+                    p2 = Point2D(-.5 + h, .5 + v)
+                    p3 = Point2D(-.5 + h, -.5 + v)
+                    p4 = Point2D(.5 + h, -.5 + v)
+
+                    self.otherPlayers.append([p1, p2, p3, p4])
+
         if self.prevWalls != self.walls:
             self.drawBackground()
             self.prevWalls = self.walls
@@ -203,6 +231,8 @@ class Game(Frame):
             for agent in self.agents:
                 self.draw_shape(agent.shape(),agent.color())
             self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display, tags='redrawable')
+            for shape in self.otherPlayers:
+                self.draw_shape(shape, 'purple')
         Frame.update(self)
 
     def draw_shape(self, shape, color, tag='redrawable'):
