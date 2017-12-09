@@ -7,7 +7,12 @@ import time
 
 TIME_STEP = 0.5
 frameCounter = 0
-
+def round(x):
+    if x - int(x) < .5:
+        x = int(x)
+    else:
+        x = int(int(x) + 1)
+    return x
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
@@ -46,11 +51,7 @@ class MovingBody(Agent):
         self.world.trim(self)
 
 gameWorld = [ [ 1 for x in range(45) ] for x in range(30) ]
-
-for x in range(5, 20):
-    gameWorld[x][23] = 0
-
-# random segment generator
+randommap = False
 def draw_vert(column, start, end):
     for x in range(start, end):
         gameWorld[column][x] = 0
@@ -59,45 +60,87 @@ def draw_hor(row, start, end):
     for x in range(start, end):
         gameWorld[x][row] = 0
 def draw_map():
-    draw_hor(23, 0, 30)
-    firstnum = random.randint(5, 40)
-    secondnum = random.randint(2, 28)
-    while firstnum in (18, 28) or firstnum % 2 != 0:
-        firstnum = random.randint(5, 40)
-    draw_hor(firstnum, 0, 30)
-    draw_hor(45 - firstnum, 0, 30)
-    draw_vert(secondnum, firstnum, 45 - firstnum)
-    draw_vert(30 - secondnum, firstnum, 45 - firstnum)
-    draw_vert(secondnum, 45 - firstnum, firstnum)
-    draw_vert(30 - secondnum, 45 - firstnum,  firstnum)
-    draw_hor(firstnum//2, 0, 30)
-    draw_hor(45 - firstnum//2, 0, 30)
-    draw_vert(secondnum, firstnum//2, 45 - firstnum//2)
-    draw_vert(30 - secondnum, firstnum//2, 45 - firstnum//2)
+    # Draws the basic map
+    draw_hor(40,0,30)
+    draw_hor(23,0,30)
+    draw_hor(6, 0, 30)
+    draw_vert(15, 6, 40)
+    draw_vert(7, 6, 40)
+    draw_vert(24, 6, 40)
+    draw_hor(15, 0, 15)
+    draw_hor(15, 15, 30)
 
-# random segment generator
-for q in range(0, 10):
-    x = random.randint(0, 29)
-    y = random.randint(0, 44)
-    upDown = random.randint(0,1)
-    howFar = random.randint(0, 20)
-    if upDown == 0:
-        for l in range(0, howFar):
-            gameWorld[x][y - l] = 0
-    else:
-        for l in range(0, howFar):
-            gameWorld[x - l][y] = 0
+def draw_maze():
+    x_vector = [0, 1, 0, -1]
+    y_vector = [-1, 0, 1, 0]
+    # This function uses a depth first search to construct a random maze
+    coordinate_list = [(random.randint(0,45), random.randint(0,30), 0)]
+    
+    while len(coordinate_list) > 0:
+        (cur_x, cur_y, cur_direction) = coordinate_list[-1]
+        if len(coordinate_list) > 3:
+            if cur_direction != coordinate_list[-2][2]:
+                direction_set = [cur_direction]
+            else:
+                direction_set = range(4)
+        else:
+            direction_set = range(4)
 
 
-draw_map()
+        gameWorld[cur_x][cur_y] = 0
+        possible_squares = []
+        for q in range(4):
+            new_x = cur_x + x_vector[q]
+            new_y = cur_y + y_vector[q]
+            if new_x >= 0 and new_x < 29 and new_y >= 0 and new_y < 44:
+                if gameWorld[new_x][new_y] == 1:
+                    check = 0
+                    for p in range(4):
+                        future_x = new_x + x_vector[p]
+                        future_y = new_y + y_vector[p]
+                        if future_x >= 0 and future_x < 29 and future_y >= 0 and future_y < 44:
+                            if gameWorld[future_x][future_y] == 0:
+                                check += 1
+                    if check == 1:
+                        possible_squares.append(q)
+        if len(possible_squares) > 0:
+            direction = cur_direction
+            pot_direction = possible_squares[random.randint(0, len(possible_squares) - 1)]
+            if pot_direction != 2 or pot_direction != 4:
+                pot_direction = possible_squares[random.randint(0, len(possible_squares) - 1)]
+            if pot_direction != direction:
+                if random.randint(0,9) > 7:
+                    direction = pot_direction
+            cur_x = cur_x + x_vector[direction]
+            cur_y = cur_y + y_vector[direction]
+            coordinate_list.append((cur_x, cur_y, direction))
+            # Uses random numbers to create a bias toward continuing in one direction
+            # to make maze paths longer
+        else:
+            coordinate_list.pop()
+if randommap == True:
+    draw_maze()
+else: 
+    draw_map()
+
+
+            
+
+
+
+
 
 class Nugget(MovingBody):
-    def __init__(self, world, x, y):
+    def __init__(self, world, x, y, type):
         position0 = Point2D(x, y)
         MovingBody.__init__(self, position0, Vector2D(0), world)
+        self.type = type
 
     def color(self):
-        return "#F0C080"
+        if self.type == 'normal':
+            return "#F0C080"
+        elif self.type == 'red':
+            return "#FF0000"
 
     def remove(self):
         for i, nugget in enumerate(self.world.nuggets):
@@ -138,11 +181,19 @@ class MazeBoundAgent(MovingBody):
 
     def update(self):
         MovingBody.update(self)
-        x = int(translate(self.position.x, 0, 30, -15, 15))
-        y = int(translate(self.position.y, 0, 45, -22.5, 22.5))
-
-        verticalBias = self.verticalBias
-        horizontalBias = self.horizontalBias
+        x = round(translate(self.position.x, 0, 30, -15, 15))
+        y = round(translate(self.position.y, 0, 45, -22.5, 22.5))
+        if gameWorld[x][y] == 1:
+            if x > 1 and gameWorld[x-1][y] == 0:
+                self.position.x = translate(x - .5, -15, 15, 0, 30)
+            elif x < 30 and gameWorld[x+1][y] == 0:
+                self.position.x = translate(x + .5, -15, 15, 0, 30)
+            elif y > 0 and gameWorld[x][y-1] == 0:
+                self.position.y = translate(y - .5, -22.5, 22.5, 0, 45)
+            elif y < 45 and gameWorld[x][y+1] == 0:
+                self.position.y = translate(y + .5, -22.5, 22.5, 0, 45)
+        
+        
 
         bias = 0.5
         if self.direction == 'up':
@@ -161,60 +212,64 @@ class MazeBoundAgent(MovingBody):
         aligned = self.aligned
         clearance = 0.5
         if len(gameWorld) > abs(x - clearance):
-            leftClear = gameWorld[int(x-clearance - 0.5)][y] == 0
+            leftClear = gameWorld[round(x-clearance - 0.5)][y] == 0
         else:
-            leftClear = gameWorld[int(x-clearance)][y] == 0
+            leftClear = gameWorld[round(x-clearance)][y] == 0
         if leftClear and self.intention == 'left':
             if not aligned:
-                self.position.y = int(self.position.y + verticalBias)
+                self.position.y = round(self.position.y + verticalBias)
                 self.aligned = True
             self.direction = 'left'
 
-        rightClear = gameWorld[int(x+clearance)][y] == 0
+        rightClear = gameWorld[round(x+clearance)][y] == 0
         if rightClear and self.intention == 'right':
             if not aligned:
-                self.position.y = int(self.position.y + verticalBias)
+                self.position.y = round(self.position.y + verticalBias)
                 self.aligned = True
             self.direction = 'right'
 
         if len(gameWorld[x]) - 0.5 > abs(y + clearance):
-            upClear = gameWorld[x][int((y+clearance + 1) // 1)] == 0
+            upClear = gameWorld[x][round((y+clearance + 1) // 1)] == 0
         else:
-            upClear = gameWorld[x][int((y+clearance) // 1)] == 0
+            upClear = gameWorld[x][round((y+clearance) // 1)] == 0
         if upClear and self.intention == 'up':
             if not aligned:
-                self.position.x = int(self.position.x + horizontalBias)
+                self.position.x = round(self.position.x + horizontalBias)
                 self.aligned = True
             self.direction = 'up'
 
         if len(gameWorld[x]) > abs(y - clearance):
-            downClear = gameWorld[x][int((y-clearance) // 1)] == 0
+            downClear = gameWorld[x][round((y-clearance) // 1)] == 0
         else:
-            downClear = gameWorld[x][int((y-clearance + 1) // 1)] == 0
+            downClear = gameWorld[x][round((y-clearance + 1) // 1)] == 0
         if downClear and self.intention == 'down':
             if not aligned:
-                self.position.x = int(self.position.x + horizontalBias)
+                self.position.x = round(self.position.x + horizontalBias)
                 self.aligned = True
             self.direction = 'down'
+
+           
+
+
 
         # print(verticalBias, horizontalBias, leftClear, rightClear, upClear, downClear)
 
         shift = 1
         speedMod = self.speedMod
         if self.direction == 'left':
-            x = int(x - shift)
+            x = round(x - shift)
             if len(gameWorld) < x and gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
                 self.velocity = Vector2D(-0.5 * speedMod,0)
         elif self.direction == 'right':
-            x = int(x + shift - 1)
+            x = round(x + shift - 1)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
                 self.velocity = Vector2D(0.5 * speedMod,0)
         elif self.direction == 'up':
-            y = int(y + shift)
+            y = round(y + shift)
             if gameWorld[x][y] == 1:
                 self.velocity = Vector2D(0)
             else:
@@ -224,9 +279,13 @@ class MazeBoundAgent(MovingBody):
                 self.velocity = Vector2D(0)
             else:
                 self.velocity = Vector2D(0,-0.5 * speedMod)
-
-
+        
 class PacMan(MazeBoundAgent):
+    def __init__(self,world, speedMod = 1):
+        self.eat_mode = False
+        self.eat_mode_ticks = 0
+        self.lives = 3
+        MazeBoundAgent.__init__(self,world)
     def color(self):
         return "#F0C080"
 
@@ -251,14 +310,26 @@ class PacMan(MazeBoundAgent):
         return pacShape
 
     def update(self):
+        
+        if self.eat_mode == True:
+            self.eat_mode_ticks += 1
+        if self.eat_mode_ticks >= 100:
+            self.eat_mode = False
+            self.eat_mode_ticks = 0
+
         MazeBoundAgent.update(self)
         for nugget in self.world.nuggets:
             if (nugget.position - self.position).magnitude() < 1:
                 self.world.addPoints(1)
+                self.world.nuggets_eaten += 1
                 nugget.remove()
+                if nugget.type == 'red':
+                    self.eat_mode = True
+
 
 class Ghost(MazeBoundAgent):
-    lethal = False
+    
+    
 
     def shape(self):
         pacShape = []
@@ -276,15 +347,18 @@ class Ghost(MazeBoundAgent):
         if self.lethal:
             return 'red'
         else:
-            if frameCounter // 10 % 2 == 0:
-                return 'green'
-            else:
-                return 'red'
+            
+            return '#00FFFF'
+            
 
     def update(self):
-        if self.lethal == False:
-            self.velocity = Vector2D(0)
+
+        if self.world.PacMan.eat_mode == True:
+            self.lethal = False
         else:
+            self.lethal = True
+        use_rand = 1
+        if use_rand == 1:
             current = (self.position - self.world.PacMan.position).magnitude()
             gx = self.position.x
             gy = self.position.y
@@ -303,22 +377,66 @@ class Ghost(MazeBoundAgent):
                 self.intention = 'down'
             if mutateUp == target:
                 self.intention = 'up'
-            print(self.intention)
+       
+
+
+            
         MazeBoundAgent.update(self)
         if self.lethal and (self.position - self.world.PacMan.position).magnitude() < 1:
-            self.world.gameOver = True
+            y = -10
+            for g in self.world.ghosts:
+                g.position.x = -8
+                g.position.y = y
+                y += 4
+                g.intention = 'up'
+                g.direction = 'up'
+                
+            self.world.PacMan.lives -= 1
+            self.world.PacMan.position.x = 0
+            self.world.PacMan.position.y = 0
+            
+            game.paused = True
+
+        if self.world.PacMan.eat_mode == True:
+            self.velocity= -self.velocity
+        if self.world.PacMan.eat_mode == True and (self.position - self.world.PacMan.position).magnitude() < 1:
+            self.world.addPoints(20)
+            self.position.x = 0
+            self.position.y = 0
 
 class PlayPacMan(Game):
     def __init__(self):
         Game.__init__(self,"PACMAN!!!",30.0,45.0,400,600,topology='wrapped')
 
         self.score = 0
-
+        self.nuggets_eaten = 0
 
         self.PacMan = PacMan(self)
 
         self.ghosts = []
-        self.ghosts.append(Ghost(self, 0.5))
+        g1 = Ghost(self, 0.6)
+        g2 = Ghost(self, 0.6)
+        g3 = Ghost(self, 0.6)
+        
+        self.ghosts.append(g1)
+        self.ghosts.append(g2)
+        self.ghosts.append(g3)
+       
+        g1.position.x = 4
+        g1.position.y = 16.5
+        
+
+
+        g2.position.x = 26
+        g2.position.y = 16.5
+        
+        g3.position.x = 27
+        g3.position.y = -16.5
+        
+
+           
+
+
 
         self.nuggets = []
         self.walls = []
@@ -332,7 +450,15 @@ class PlayPacMan(Game):
                 h = translate(x, 0, 30, -15, 15) - 0.2
                 v = translate(y, 0, 45, -22, 22) - 0.5
                 if gameWorld[x][y] == 0:
-                    self.nuggets.append(Nugget(self, h, v))
+                    counter += 1
+                    
+                    if counter % 31  == 0:
+                        Nugget.type = 'red'
+                        self.nuggets.append(Nugget(self, h, v, 'red'))
+                    else:
+                        self.nuggets.append(Nugget(self, h, v, 'normal'))
+                    
+
 
                     wallMap[x][y] -= 1000
                     if len(wallMap) > x+1:
@@ -354,6 +480,7 @@ class PlayPacMan(Game):
 
     def addPoints(self, p):
         self.score += 1
+
     def handle_keypress(self,event):
         Game.handle_keypress(self,event)
         if event.char == 'i':
@@ -368,17 +495,21 @@ class PlayPacMan(Game):
             self.PacMan.turn_down()
         elif event.char == 'p':
             self.paused = not self.paused
+        elif event.char == 't':
+            self.PacMan.position.x = 0
+            self.PacMan.position.y = 0
 
 
     def update(self):
         # Are we waiting to toss asteroids out?
-        self.display = 'score: ' + str(self.score)
+        self.display = '_______           Score: ' + str(self.score) + ' Lives ' + str(self.PacMan.lives)
+        if self.PacMan.lives <= 0:
+            game.GAME_OVER = True
+        if self.nuggets_eaten == len(self.nuggets):
+            self.display = "YOU WIN" + "Final Score:" + str(score)
         Game.update(self)
         # add ghosts after 60 frames have been rendered
-        if frameCounter == 60:
-            for g in self.ghosts:
-                g.lethal = True
-
+        
 
 
 game = PlayPacMan()
