@@ -3,8 +3,10 @@ CSCI121 project 4: "agame," by Canyon Foot and Jasper Fung. The game, agame, is 
 You can see your friends play at the same time as you: they appear as purple squares on your map, moving in their own dimension.
 
 # Installation
-agame requires the `socketIO_client_nexus` library for our hi-tech multiplayer functionality. Since there is no singleplayer option, you must install it.
-1. If you don't have pip, you will need to install it. Instructions on how to install pip can be found [here](https://pip.pypa.io/en/stable/installing/).
+1. clone this repository or download it in zip format [here](https://github.com/overwatchcorp/agame/archive/master.zip)
+
+agame requires the `socketIO_client_nexus` library for our ***hi-tech*** multiplayer i n t e r f a c e (HiTMi t e r f a c e for short).
+1. If you don't have pip, you will need to install it. Get pip [here](https://pip.pypa.io/en/stable/installing/).
 2. run `pip install socketIO_client_nexus` to install the library globally.   
 or use virtualenv if you know how to do that :)
 
