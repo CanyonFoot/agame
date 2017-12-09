@@ -6,6 +6,42 @@ import urllib.request as request
 import subprocess
 import os
 import ctypes
+from socketIO_client_nexus import SocketIO, BaseNamespace
+import threading
+import queue
+
+q = queue.Queue()
+p = queue.Queue()
+s = queue.Queue()
+
+def recieveFrame(data):
+    p.queue.clear()
+    p.put(data)
+
+def listen():
+    with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
+        socket.on('frame', recieveFrame)
+        socket.wait()
+
+def broadcast():
+    with SocketIO('pacman-at-reed.herokuapp.com', 80, BaseNamespace) as socket:
+        s.put(socket._engineIO_session.id)
+        while True:
+            pass
+            if q.empty() != True:
+                e = q.get()
+                if e == False:
+                    socket.disconnect()
+                socket.emit('checkin', {
+                    'positionX': e.position.x,
+                    'positionY': e.position.y
+                })
+            time.sleep(0.25)
+
+tasks = [listen, broadcast]
+for task in tasks:
+    t = threading.Thread(target=task)
+    t.start()
 
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -17,6 +53,8 @@ def translate(value, leftMin, leftMax, rightMin, rightMax):
 
     # Convert the 0-1 range into a value in the right range.
     return rightMin + (valueScaled * rightSpan)
+
+socketID = ''
 
 class Agent:
 
@@ -69,6 +107,8 @@ class Game(Frame):
         self.wallpaperSet = False
 
         self.paused = False
+        self.gameOver = False
+
         # Register the world coordinate and graphics parameters.
         self.WIDTH = w
         self.HEIGHT = h
@@ -81,7 +121,6 @@ class Game(Frame):
         self.agents = []
         self.display = 'test'
         self.GAME_OVER = False
-        self.gameOver = False
 
         # Populate the background with the walls for pacman
         self.prevWalls = None
@@ -109,6 +148,10 @@ class Game(Frame):
             self.text = None
         self.pack()
 
+        # multiplayer
+        self.otherPlayers = []
+        self.socketID = []
+
     def report(self,line=""):
         line += "\n"
         if self.text == None:
@@ -130,7 +173,30 @@ class Game(Frame):
 
     def remove(self, agent):
         self.agents.remove(agent)
+
     def update(self):
+        if s.empty():
+            pass
+        else:
+            self.socketID = s.get()
+        if self.PacMan and self.gameOver != True:
+            q.put(self.PacMan)
+            otherPlayers = p.get()
+            self.otherPlayers = []
+            for player in otherPlayers:
+                if player != self.socketID:
+                    # h = translate(x, 0, 30, -15, 15)
+                    # v = translate(y, 0, 45, -22, 22) - .45
+                    h = otherPlayers[player]['x']
+                    v = otherPlayers[player]['y']
+                    # print(h, v)
+                    p1 = Point2D(.5 + h,.5 + v)
+                    p2 = Point2D(-.5 + h, .5 + v)
+                    p3 = Point2D(-.5 + h, -.5 + v)
+                    p4 = Point2D(.5 + h, -.5 + v)
+
+                    self.otherPlayers.append([p1, p2, p3, p4])
+
         if self.prevWalls != self.walls:
             self.drawBackground()
             self.prevWalls = self.walls
@@ -164,10 +230,12 @@ class Game(Frame):
             self.clear()
             for agent in self.agents:
                 self.draw_shape(agent.shape(),agent.color())
-            self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display)
+            self.canvas.create_text(60, 25, font='inconsolata 20', fill='#FFF', text=self.display, tags='redrawable')
+            for shape in self.otherPlayers:
+                self.draw_shape(shape, 'purple')
         Frame.update(self)
 
-    def draw_shape(self, shape, color, tag='rewdrawable'):
+    def draw_shape(self, shape, color, tag='redrawable'):
         wh,ww = self.WINDOW_HEIGHT,self.WINDOW_WIDTH
         h = self.bounds.height()
         x = self.bounds.xmin
@@ -200,7 +268,7 @@ class Game(Frame):
                     self.draw_shape([p1,p2,p3,p4], 'blue', 'static')
 
     def clear(self):
-        self.canvas.delete('rewdrawable')
+        self.canvas.delete('redrawable')
 
     def window_to_world(self,x,y):
         return self.bounds.point_at(x/self.WINDOW_WIDTH, 1.0-y/self.WINDOW_HEIGHT)
