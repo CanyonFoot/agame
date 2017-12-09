@@ -8,6 +8,9 @@ import time
 TIME_STEP = 0.5
 frameCounter = 0
 
+# thank you stackoverflow
+# https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
+# originally I used numpy
 def translate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
     leftSpan = leftMax - leftMin
@@ -45,8 +48,12 @@ class MovingBody(Agent):
         self.accel    = self.steer()
         self.world.trim(self)
 
+# world kept in 45x60 matrix
+# 1 = walls
+# 0 = maze, contains a nugget
 gameWorld = [ [ 1 for x in range(45) ] for x in range(30) ]
 
+# small segment for pacman to always have a place to move
 for x in range(5, 20):
     gameWorld[x][23] = 0
 
@@ -91,6 +98,7 @@ for q in range(0, 10):
 
 draw_map()
 
+# finger licking good
 class Nugget(MovingBody):
     def __init__(self, world, x, y):
         position0 = Point2D(x, y)
@@ -102,19 +110,27 @@ class Nugget(MovingBody):
     def remove(self):
         for i, nugget in enumerate(self.world.nuggets):
             if self == nugget:
-                # move nugget to somewhere else
-                self.world.nuggets[i].position = Point2D(30, 22)
+                # move nugget to somewhere off the map
+                self.world.nuggets[i].position = Point2D(300, 22)
 
+# derrivative of agent that stays within map
 class MazeBoundAgent(MovingBody):
     def __init__(self,world, speedMod = 1):
         position0    = Point2D(0,0)
         velocity0    = Vector2D(.5,0.0)
         MovingBody.__init__(self,position0,velocity0,world)
+        # pacman will turn to intention's direciton when the path is clear
         self.direction = 'left'
         self.intention = self.direction
+        # each turn, pacman is aligned to stay within the grid
         self.aligned = True
+        '''
+        when changing direcitons, especially on a 2x2+ wide rectangle,
+        we add or subtract a bit to the rounding so that the MazeBoundAgent goes into the right collum or row
+        '''
         self.verticalBias = 0
         self.horizontalBias = 0
+        # we use this to slow the ghosts
         self.speedMod = speedMod
 
     def color(self):
@@ -144,6 +160,8 @@ class MazeBoundAgent(MovingBody):
         verticalBias = self.verticalBias
         horizontalBias = self.horizontalBias
 
+        # when changing direcitons from horizontal to vertical or vice versa,
+        # we use bias to make sure MazeBoundAgent ends up in the right collum/row
         bias = 0.5
         if self.direction == 'up':
             verticalBias = bias
@@ -158,6 +176,7 @@ class MazeBoundAgent(MovingBody):
             verticalBias = 0
             horizontalBias = bias
 
+        # each time MazeBoundAgent turns, we realign it so it stays within the grid
         aligned = self.aligned
         clearance = 0.5
         if len(gameWorld) > abs(x - clearance):
@@ -170,6 +189,8 @@ class MazeBoundAgent(MovingBody):
                 self.aligned = True
             self.direction = 'left'
 
+        # whenever MazeBoundAgent intends to turn, it checks to see if the path is clear
+        # when the path is clear, then MazeBoundAgent can turns
         rightClear = gameWorld[int(x+clearance)][y] == 0
         if rightClear and self.intention == 'right':
             if not aligned:
@@ -197,8 +218,7 @@ class MazeBoundAgent(MovingBody):
                 self.aligned = True
             self.direction = 'down'
 
-        # print(verticalBias, horizontalBias, leftClear, rightClear, upClear, downClear)
-
+        # checks to see if we've hit a wall in the maze
         shift = 1
         speedMod = self.speedMod
         if self.direction == 'left':
@@ -240,6 +260,7 @@ class PacMan(MazeBoundAgent):
         pacShape.append(self.position + Vector2D(-.25, .5))
         pacShape.append(self.position + Vector2D(-.5, .25))
         pacShape.append(self.position + Vector2D(-.5, -.25))
+        # pacmans 'mouth' is just the center point, we change where it is in the array to make it turn
         if self.direction == 'right':
             pacShape.insert(3, self.position + Vector2D(0,0))
         elif self.direction == 'up':
@@ -285,6 +306,7 @@ class Ghost(MazeBoundAgent):
         if self.lethal == False:
             self.velocity = Vector2D(0)
         else:
+            # ghosts check to see which direciton would get it closest to pacman and moves in that direction
             current = (self.position - self.world.PacMan.position).magnitude()
             gx = self.position.x
             gy = self.position.y
@@ -325,6 +347,9 @@ class PlayPacMan(Game):
 
         counter = 0
 
+        # any square with a value greater than 5 will have a wall drawn on it
+        # squares immeidately adjacent (not diagonal) to nuggets have values added
+        # Game.py will draw blue rectangles on any 5+ points in matrix
         wallMap = [ [ 0 for x in range(45) ] for x in range(30) ]
 
         for x, r in enumerate(gameWorld):
@@ -344,13 +369,6 @@ class PlayPacMan(Game):
                     if len(wallMap[x]) > y-1:
                         wallMap[x][y-1] += 5
         self.walls = wallMap
-
-        # for x, r in enumerate(wallMap):
-        #     for y, c in enumerate(r):
-        #         h = translate(x, 0, 30, -15, 15) - 0.2
-        #         v = translate(y, 0, 45, -22, 22) - 0.5
-        #         if wallMap[x][y] > 0:
-        #             self.walls.append(Wall(self, h, v))
 
     def addPoints(self, p):
         self.score += 1
@@ -372,6 +390,8 @@ class PlayPacMan(Game):
 
     def update(self):
         # Are we waiting to toss asteroids out?
+        # haha no we are not. in fact, PacMan has no asteroids
+        # this send text to Game.py, where it will display whatever string we put in here
         self.display = 'score: ' + str(self.score)
         Game.update(self)
         # add ghosts after 60 frames have been rendered
